@@ -1,0 +1,20 @@
+{
+    "name": "neoblog-plugin-control-panel",
+    "version": "0.1.0",
+    "description": "article/config management panel for neoblog",
+    "scripts": {
+        "start": "neoblog",
+        "build": "parcel build src/client/main.js -d template/assets"
+    },
+    "keywords": [
+        "neoblog",
+        "neoblog-plugin"
+    ],
+    "author": "rocka <i@rocka.me>",
+    "license": "MIT",
+    "dependencies": {
+        "koa-send": "^4.1.2",
+        "neoblog": "git+https://github.com/rocket1184/neoblog.git"
+    },
+    "devDependencies": {}
+}
