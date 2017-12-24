@@ -6,6 +6,8 @@ const Mount = require('koa-mount');
 const Router = require('koa-router');
 const Static = require('koa-static-cache');
 
+const ApiRoutes = require('./src/server/index.js');
+
 const staticDir = path.join(__dirname, 'static');
 const router = new Router();
 
@@ -20,5 +22,5 @@ module.exports = {
     version: '0.1.0',
     description: 'article/config management panel for neoblog.',
     author: 'rocka <i@rocka.me>',
-    routes: [router.routes(), staticRoute],
+    routes: [router.routes(), staticRoute, ApiRoutes.routes],
 };
