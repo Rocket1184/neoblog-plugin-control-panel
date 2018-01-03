@@ -54,7 +54,6 @@ class ApiRouter {
             let { offset, limit } = ctx.query;
             offset = offset || 0;
             limit = limit || 10;
-            console.log(offset, limit);
             ctx.body = ctx.app.server.state.articles
                 .slice(offset, offset + limit)
                 .map(a => ({ meta: a.meta, file: a.file }));
