@@ -18,5 +18,7 @@
         "koa-send": "^4.1.2",
         "neoblog": "git+https://github.com/rocket1184/neoblog.git"
     },
-    "devDependencies": {}
+    "devDependencies": {
+        "google-closure-compiler-js": "^20171203.0.0"
+    }
 }
