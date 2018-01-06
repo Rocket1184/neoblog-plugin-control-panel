@@ -1,3 +1,6 @@
 .vscode
-.cache
 node_modules
+
+src/client/elm-stuff
+static/dist.js
+static/dev.html

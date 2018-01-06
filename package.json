@@ -4,7 +4,8 @@
     "description": "article/config management panel for neoblog",
     "scripts": {
         "start": "neoblog",
-        "build": "parcel build src/client/main.js -d template/assets"
+        "build:dev": "cd src/client && elm-make Dev.elm --output ../../static/dev.html",
+        "build:prod": "cd src/client && elm-make Main.elm --output ../../static/dist.js && google-closure-compiler-js ../../static/dist.js > ../../static/dist.min.js"
     },
     "keywords": [
         "neoblog",
@@ -15,10 +16,11 @@
     "dependencies": {
         "jsonwebtoken": "^8.1.0",
         "koa-jwt": "^3.3.0",
-        "koa-send": "^4.1.2",
-        "neoblog": "git+https://github.com/rocket1184/neoblog.git"
+        "koa-send": "^4.1.2"
     },
     "devDependencies": {
-        "google-closure-compiler-js": "^20171203.0.0"
+        "elm": "^0.18.0",
+        "google-closure-compiler-js": "^20171203.0.0",
+        "neoblog": "git+https://github.com/rocket1184/neoblog.git"
     }
 }
