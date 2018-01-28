@@ -1,8 +1,10 @@
+const PluginControlPanel = require('.');
+
 module.exports = {
     title: 'Plugin Contorl Panel',
     articleDir: './node_modules/neoblog/example/article',
     plugins: [
-        require('.')
+        new PluginControlPanel({ usr: 'root', pwd: 'root' })
     ],
     templateArgs: {
         side: {

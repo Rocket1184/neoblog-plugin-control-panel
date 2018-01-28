@@ -3,6 +3,8 @@
 const fs = require('fs');
 const path = require('path');
 const util = require('util');
+const crypto = require('crypto');
+
 const Body = require('koa-body');
 const KoaJwt = require('koa-jwt');
 const Jwt = require('jsonwebtoken');
@@ -13,9 +15,14 @@ const unlink = util.promisify(fs.unlink);
 const writeFile = util.promisify(fs.writeFile);
 
 class ApiRouter {
-    constructor(secret, jwtOptions) {
+    constructor(secret, jwtOptions, usr, pwd, profile = {}) {
         if (!secret) throw new Error('[ApiRoutes] `secret` must be specificed.');
         this.secret = secret;
+        if (!usr) throw new Error('[ApiRoutes] `usr` must be specificed.');
+        this.usr = usr;
+        if (!pwd) throw new Error('[ApiRoutes] `pwd` must be specificed.');
+        this.pwd = crypto.createHash('sha384').update(pwd).digest('hex');
+        this.profile = Object.assign(profile, { usr: this.usr });
         if (!jwtOptions) this.jwtOptions = { expiresIn: '2d' };
         else this.jwtOptions = { ...jwtOptions };
         this.__init();
@@ -27,12 +34,8 @@ class ApiRouter {
 
         this.router.post('/token', ctx => {
             const { usr, pwd } = ctx.request.body;
-            if (usr === 'root' && pwd === 'root') {
-                const profile = {
-                    id: 0,
-                    username: 'root',
-                    groups: ['root']
-                };
+            if (usr === this.usr && pwd === this.pwd) {
+                const profile = this.profile;
                 const token = Jwt.sign(profile, this.secret, this.jwtOptions);
                 ctx.response.body = { token };
                 return;
