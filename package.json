@@ -14,13 +14,13 @@
     "author": "rocka <i@rocka.me>",
     "license": "MIT",
     "dependencies": {
-        "jsonwebtoken": "^8.1.0",
+        "jsonwebtoken": "^8.1.1",
         "koa-jwt": "^3.3.0",
         "koa-send": "^4.1.2"
     },
     "devDependencies": {
         "elm": "^0.18.0",
-        "google-closure-compiler-js": "^20171203.0.0",
+        "google-closure-compiler-js": "^20180101.0.0",
         "neoblog": "git+https://github.com/rocket1184/neoblog.git"
     }
 }
