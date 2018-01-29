@@ -5,6 +5,8 @@ import Html.Attributes exposing (..)
 import Main
 
 
+{-| Attach stylesheet to Dev html
+-}
 stylesheet : Html msg
 stylesheet =
     node "link"
@@ -14,9 +16,19 @@ stylesheet =
         []
 
 
-main : Html msg
-main =
+view : Main.Model -> Html Main.Msg
+view model =
     div []
-        [ stylesheet
-        , Main.program
+        [ Main.view model
+        , stylesheet
         ]
+
+
+main : Program Never Main.Model Main.Msg
+main =
+    Html.program
+        { init = Main.init
+        , view = view
+        , update = Main.update
+        , subscriptions = Main.subscriptions
+        }
