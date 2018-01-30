@@ -75,7 +75,7 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    div []
+    div [ class "manage-login" ]
         [ h1 [] [ text "Login" ]
         , p []
             [ label [ for "usr" ] [ text "Username" ]
