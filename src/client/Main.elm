@@ -2,6 +2,7 @@ module Main exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Data exposing (Session)
 
 
 -- Page import
@@ -17,14 +18,14 @@ type PageModel
 
 
 type alias Model =
-    { token : String
+    { session : Session
     , page : PageModel
     }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( { token = ""
+    ( { session = Session ""
       , page = Login Login.init
       }
     , Cmd.none
@@ -40,9 +41,7 @@ view model =
     div [ class "page-wrapper" ]
         [ case model.page of
             Login pageModel ->
-                Login.view pageModel
-                    |> Html.map LoginMsg
-        , p [] [ text model.token ]
+                Html.map LoginMsg (Login.view pageModel)
         ]
 
 
@@ -52,7 +51,6 @@ view model =
 
 type Msg
     = LoginMsg Login.Msg
-    | SetToken String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -71,12 +69,9 @@ update msg model =
                                     model
 
                                 Login.SetToken token ->
-                                    { model | token = token }
+                                    { model | session = Session token }
                     in
                         ( { newModel | page = Login newPageModel }, Cmd.map LoginMsg pageCmd )
-
-                SetToken token ->
-                    ( { model | token = token }, Cmd.none )
 
 
 
