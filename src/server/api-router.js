@@ -54,12 +54,17 @@ class ApiRouter {
         });
 
         this.router.get('/articles', ctx => {
+            const articles = ctx.app.server.state.articles;
             let { offset, limit } = ctx.query;
             offset = offset || 0;
             limit = limit || 10;
-            ctx.body = ctx.app.server.state.articles
-                .slice(offset, offset + limit)
-                .map(a => ({ meta: a.meta, file: a.file }));
+            const body = {
+                total: articles.length,
+                aritcles: articles
+                    .slice(offset, offset + limit)
+                    .map(a => ({ meta: a.meta, file: a.file }))
+            };
+            ctx.body = body;
         });
 
         this.router.use('/articles/:name', async (ctx, next) => {
