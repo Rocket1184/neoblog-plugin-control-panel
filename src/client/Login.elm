@@ -120,4 +120,4 @@ tryLogin model =
 
 decodeToken : Json.Decode.Decoder String
 decodeToken =
-    Json.Decode.at [ "token" ] Json.Decode.string
+    Json.Decode.field "token" Json.Decode.string
