@@ -63,9 +63,14 @@ class ApiRouter {
         });
 
         this.router.use('/articles/:name', async (ctx, next) => {
-            ctx.state.article = ctx.app.server.state.articles
-                .filter(a => a.file.base === ctx.params.name)
-                .pop();
+            ctx.state.article = ctx.app.server.state.articles.find(a => a.file.base === ctx.params.name);
+            if (!ctx.state.article) {
+                ctx.body = {
+                    message: `cannot find article named '${ctx.params.name}'.`
+                };
+                ctx.status = 404;
+                return;
+            }
             try {
                 await next();
             } catch (err) {
@@ -77,7 +82,13 @@ class ApiRouter {
                 ctx.body = err.stack;
                 ctx.status = 500;
             }
-        })
+        });
+
+        // get single article detail
+        this.router.get('/articles/:name', async ctx => {
+            const { article } = ctx.state;
+            ctx.body = article;
+        });
 
         // create new article
         this.router.post('/articles/:name', async ctx => {
