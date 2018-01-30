@@ -8,6 +8,7 @@ import Data exposing (Session)
 -- Page import
 
 import Login
+import Article
 
 
 -- Model
@@ -15,6 +16,7 @@ import Login
 
 type PageModel
     = Login Login.Model
+    | Article Article.Model
 
 
 type alias Model =
@@ -42,6 +44,9 @@ view model =
         [ case model.page of
             Login pageModel ->
                 Html.map LoginMsg (Login.view pageModel)
+
+            Article pageModel ->
+                Html.map ArticleMsg (Article.view pageModel)
         ]
 
 
@@ -51,6 +56,7 @@ view model =
 
 type Msg
     = LoginMsg Login.Msg
+    | ArticleMsg Article.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -64,14 +70,48 @@ update msg model =
                             Login.update pageMsg pageModel
 
                         newModel =
+                            { model | page = Login newPageModel }
+                    in
+                        case msgFromPage of
+                            Login.NoOp ->
+                                ( newModel, Cmd.map LoginMsg pageCmd )
+
+                            Login.SetToken token ->
+                                let
+                                    newSession =
+                                        Session ("Bearer " ++ token)
+
+                                    modelWithSession =
+                                        { newModel
+                                            | session = newSession
+                                            , page = (Article Article.init)
+                                        }
+                                in
+                                    update (ArticleMsg Article.FetchArticles) modelWithSession
+
+                _ ->
+                    ( model, Cmd.none )
+
+        Article pageModel ->
+            case msg of
+                ArticleMsg pageMsg ->
+                    let
+                        ( ( newPageModel, pageCmd ), msgFromPage ) =
+                            Article.update model.session pageMsg pageModel
+
+                        newModel =
                             case msgFromPage of
-                                Login.NoOp ->
+                                Article.NoOp ->
                                     model
 
-                                Login.SetToken token ->
-                                    { model | session = Session token }
+                                Article.EditArticle article ->
+                                    -- { model | session = Session token }
+                                    model
                     in
-                        ( { newModel | page = Login newPageModel }, Cmd.map LoginMsg pageCmd )
+                        ( { newModel | page = Article newPageModel }, Cmd.map ArticleMsg pageCmd )
+
+                _ ->
+                    ( model, Cmd.none )
 
 
 
