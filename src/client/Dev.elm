@@ -2,6 +2,7 @@ module Dev exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Navigation
 import Main
 
 
@@ -26,7 +27,7 @@ view model =
 
 main : Program Never Main.Model Main.Msg
 main =
-    Html.program
+    Navigation.program Main.UrlChange
         { init = Main.init
         , view = view
         , update = Main.update
