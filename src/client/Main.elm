@@ -1,14 +1,18 @@
 module Main exposing (..)
 
-import Html exposing (..)
-import Html.Attributes exposing (..)
+import Html exposing (Html, div)
+import Html.Attributes exposing (class)
+import Navigation exposing (Location)
+import UrlParser exposing (parseHash, s, (</>), string)
 import Data exposing (Session)
+import Misc exposing ((=>))
 
 
 -- Page import
 
 import Login
 import Article
+import NotFound
 
 
 -- Model
@@ -17,6 +21,7 @@ import Article
 type PageModel
     = Login Login.Model
     | Article Article.Model
+    | NotFound NotFound.Model
 
 
 type alias Model =
@@ -25,17 +30,29 @@ type alias Model =
     }
 
 
-init : ( Model, Cmd Msg )
-init =
+init : Location -> ( Model, Cmd Msg )
+init location =
     ( { session = Session ""
-      , page = Login Login.init
+      , page = initPage location
       }
     , Cmd.none
     )
 
 
+initPage : Location -> PageModel
+initPage location =
+    case parseHash (s "!" </> string) location of
+        Nothing ->
+            Login Login.init
 
--- View
+        Just "login" ->
+            Login Login.init
+
+        Just "articles" ->
+            Article Article.init
+
+        _ ->
+            NotFound (NotFound.init location)
 
 
 view : Model -> Html Msg
@@ -47,6 +64,9 @@ view model =
 
             Article pageModel ->
                 Html.map ArticleMsg (Article.view pageModel)
+
+            NotFound pageModel ->
+                Html.map NotFoundMsg (NotFound.view pageModel)
         ]
 
 
@@ -55,63 +75,96 @@ view model =
 
 
 type Msg
-    = LoginMsg Login.Msg
+    = UrlChange Location
+    | LoginMsg Login.Msg
     | ArticleMsg Article.Msg
+    | NotFoundMsg NotFound.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case model.page of
-        Login pageModel ->
-            case msg of
-                LoginMsg pageMsg ->
-                    let
-                        ( ( newPageModel, pageCmd ), msgFromPage ) =
-                            Login.update pageMsg pageModel
+    let
+        page =
+            model.page
 
-                        newModel =
-                            { model | page = Login newPageModel }
-                    in
-                        case msgFromPage of
-                            Login.NoOp ->
-                                ( newModel, Cmd.map LoginMsg pageCmd )
+        session =
+            model.session
 
-                            Login.SetToken token ->
-                                let
-                                    newSession =
-                                        Session ("Bearer " ++ token)
+        simpleSubUpdate toModel toMsg subUpdate subMsg subModel =
+            let
+                ( newModel, newCmd ) =
+                    subUpdate subMsg subModel
+            in
+                { model | page = toModel newModel }
+                    => Cmd.map toMsg newCmd
 
-                                    modelWithSession =
-                                        { newModel
-                                            | session = newSession
-                                            , page = (Article Article.init)
-                                        }
-                                in
-                                    update (ArticleMsg Article.FetchArticles) modelWithSession
+        complexSubUpdate toModel toMsg subUpdate subMsg subModel =
+            let
+                ( ( newModel, newCmd ), msgFromPage ) =
+                    subUpdate subMsg subModel
+            in
+                { model | page = toModel newModel }
+                    => Cmd.map toMsg newCmd
+                    => msgFromPage
+    in
+        case ( page, msg ) of
+            ( _, UrlChange location ) ->
+                let
+                    page =
+                        initPage location
+                in
+                    case page of
+                        Article pageModel ->
+                            let
+                                ( modelCmdMsg, msgFromPage ) =
+                                    complexSubUpdate Article ArticleMsg (Article.update session) Article.FetchArticles pageModel
+                            in
+                                modelCmdMsg
 
-                _ ->
-                    ( model, Cmd.none )
+                        _ ->
+                            { model | page = page } => Cmd.none
 
-        Article pageModel ->
-            case msg of
-                ArticleMsg pageMsg ->
-                    let
-                        ( ( newPageModel, pageCmd ), msgFromPage ) =
-                            Article.update model.session pageMsg pageModel
+            ( Login pageModel, LoginMsg pageMsg ) ->
+                let
+                    ( ( newModel, newCmdMsg ), msgFromPage ) =
+                        complexSubUpdate Login LoginMsg Login.update pageMsg pageModel
+                in
+                    case msgFromPage of
+                        Login.SetToken token ->
+                            let
+                                modelWithSession =
+                                    { newModel | session = Session ("Bearer " ++ token) }
 
-                        newModel =
-                            case msgFromPage of
-                                Article.NoOp ->
-                                    model
+                                locationCmd =
+                                    Navigation.newUrl "#!/articles"
+                            in
+                                ( modelWithSession, locationCmd )
 
-                                Article.EditArticle article ->
-                                    -- { model | session = Session token }
-                                    model
-                    in
-                        ( { newModel | page = Article newPageModel }, Cmd.map ArticleMsg pageCmd )
+                        _ ->
+                            ( newModel, newCmdMsg )
 
-                _ ->
-                    ( model, Cmd.none )
+            ( Article pageModel, ArticleMsg pageMsg ) ->
+                let
+                    ( modelCmdMsg, msgFromPage ) =
+                        complexSubUpdate Article ArticleMsg (Article.update session) pageMsg pageModel
+                in
+                    modelCmdMsg
+
+            ( NotFound pageModel, NotFoundMsg pageMsg ) ->
+                let
+                    ( ( newModel, newCmdMsg ), msgFromPage ) =
+                        complexSubUpdate NotFound NotFoundMsg NotFound.update pageMsg pageModel
+                in
+                    case msgFromPage of
+                        NotFound.GoBack ->
+                            let
+                                locationCmd =
+                                    Navigation.back 1
+                            in
+                                ( model, locationCmd )
+
+            _ ->
+                ( model, Cmd.none )
 
 
 
@@ -125,7 +178,7 @@ subscriptions model =
 
 main : Program Never Model Msg
 main =
-    Html.program
+    Navigation.program UrlChange
         { init = init
         , view = view
         , update = update
