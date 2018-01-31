@@ -79,7 +79,7 @@ view model =
         [ h1 [] [ text "Login" ]
         , p []
             [ label [ for "usr" ] [ text "Username" ]
-            , input [ name "username", id "usr", onInput UsernameInput ] []
+            , input [ name "username", id "usr", onInput UsernameInput, autofocus True ] []
             ]
         , p []
             [ label [ for "pwd" ] [ text "Password" ]
