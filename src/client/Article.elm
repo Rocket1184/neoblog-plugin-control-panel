@@ -5,10 +5,9 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Http
 import String
-import Json.Encode
 import Json.Decode
 import List
-import Misc exposing ((=>))
+import Misc exposing ((=>), onKeyDown, toIntDefault)
 import Data
 import Request
 
@@ -34,12 +33,14 @@ init =
 
 
 type Msg
-    = GotArticles (Result Http.Error ArticlesReponse)
+    = GotArticles (Result Http.Error ArticlesResponse)
     | SetPageNumber Int
     | InputPageNumber String
     | GoToPage
     | FetchArticles
     | TitleClick Data.Article
+    | PrevPage
+    | NextPage
     | Ignore
 
 
@@ -79,20 +80,32 @@ update session msg model =
 
         GoToPage ->
             let
-                newNum =
-                    case (String.toInt model.numberInput) of
-                        Ok number ->
-                            number
+                newPage =
+                    toIntDefault model.pageNumber model.numberInput
 
-                        Err msg ->
-                            model.pageNumber
+                newMsg =
+                    SetPageNumber newPage
             in
-                update session (SetPageNumber model.pageNumber) model
+                update session newMsg model
 
         FetchArticles ->
             model
-                => (requestArticles session.token)
+                => (requestArticles session.token model.pageNumber)
                 => NoOp
+
+        PrevPage ->
+            let
+                newMsg =
+                    SetPageNumber (model.pageNumber - 1)
+            in
+                update session newMsg model
+
+        NextPage ->
+            let
+                newMsg =
+                    SetPageNumber (model.pageNumber + 1)
+            in
+                update session newMsg model
 
         Ignore ->
             model
@@ -102,11 +115,6 @@ update session msg model =
 
 
 -- View
-
-
-onKeyDown : (Int -> msg) -> Attribute msg
-onKeyDown tagger =
-    on "keydown" (Json.Decode.map tagger keyCode)
 
 
 viewArticleTags : Data.ArticleMeta -> Html Msg
@@ -125,25 +133,37 @@ viewArticle article =
         ]
 
 
-viewPaignation : Int -> Int -> Html Msg
-viewPaignation total current =
+viewPagination : Model -> Html Msg
+viewPagination model =
     let
         prev =
-            if current == 1 then
+            if model.pageNumber == 1 then
                 []
             else
-                [ span [ class "button" ] [ text "<" ] ]
+                a
+                    [ class "prev"
+                    , onClick PrevPage
+                    ]
+                    [ span [] [ text "<" ]
+                    ]
+                    |> List.singleton
 
         next =
-            if current == total then
+            if model.pageNumber * 10 >= model.total then
                 []
             else
-                [ span [ class "button" ] [ text ">" ] ]
+                a
+                    [ class "next"
+                    , onClick NextPage
+                    ]
+                    [ span [] [ text ">" ]
+                    ]
+                    |> List.singleton
 
         number =
-            [ input
+            input
                 [ class "number"
-                , value (toString current)
+                , placeholder (toString model.pageNumber)
                 , type_ "number"
                 , onInput InputPageNumber
                 , onKeyDown
@@ -155,7 +175,7 @@ viewPaignation total current =
                     )
                 ]
                 []
-            ]
+                |> List.singleton
     in
         div [ class "pagination" ] (List.concat [ prev, number, next ])
 
@@ -164,7 +184,7 @@ view : Model -> Html Msg
 view model =
     div [ class "manage-article" ]
         [ div [ class "article-list" ] (List.map viewArticle model.articles)
-        , viewPaignation model.total model.pageNumber
+        , viewPagination model
         ]
 
 
@@ -172,20 +192,36 @@ view model =
 -- Http
 
 
-type alias ArticlesReponse =
+type alias ArticlesResponse =
     { total : Int
     , articles : List Data.Article
     }
 
 
-decodeArticles : Json.Decode.Decoder ArticlesReponse
+decodeArticles : Json.Decode.Decoder ArticlesResponse
 decodeArticles =
-    Json.Decode.map2 ArticlesReponse
+    Json.Decode.map2 ArticlesResponse
         (Json.Decode.field "total" Json.Decode.int)
         (Json.Decode.field "aritcles" (Json.Decode.list Data.decodeArticle))
 
 
-requestArticles : String -> Cmd Msg
-requestArticles token =
-    Request.get "api/articles" token decodeArticles
-        |> Http.send GotArticles
+requestArticles : String -> Int -> Cmd Msg
+requestArticles token page =
+    let
+        offset =
+            (page - 1) * 10
+
+        limit =
+            10
+
+        url =
+            String.join "?"
+                [ "api/articles"
+                , String.join "&"
+                    [ "offset=" ++ toString offset
+                    , "limit=" ++ toString limit
+                    ]
+                ]
+    in
+        Request.get url token decodeArticles
+            |> Http.send GotArticles
