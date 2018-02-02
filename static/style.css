@@ -9,10 +9,24 @@ button:focus {
     outline: none;
 }
 
+/* reset input style */
+
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type=number] {
+    -moz-appearance: textfield;
+}
+
 button::-moz-focus-inner {
     border: 0;
     padding: 0;
 }
+
+/* Global & Public */
 
 body {
     background-color: #ddd;
@@ -21,6 +35,8 @@ body {
     font-size: 16px;
     font-family: Noto Sans CJK SC, Noto Sans, Microsoft YaHei, WenQuanYi Micro Hei, sans-serif;
 }
+
+/* Login */
 
 .manage-login {
     width: 300px;
@@ -86,4 +102,83 @@ body {
 .manage-login button:active {
     margin-top: 1px;
     box-shadow: 0 1px 1px #00675b inset;
+}
+
+/* Article */
+
+.manage-article {
+    margin: 1rem;
+}
+
+.manage-article .article {
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    background-color: white;
+    border-radius: 2px;
+    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.15);
+}
+
+.manage-article .article .title {
+    font-weight: bold;
+}
+
+.manage-article .article .tags span {
+    font-size: 0.9em;
+    background-color: #f0f0f0;
+    border: 1px solid #b0b0b0;
+    border-radius: 2px;
+    padding: 0 0.25em;
+}
+
+.manage-article .article .date {
+    font-size: 0.8rem;
+    color: grey;
+}
+
+.manage-article .pagination {
+    text-align: center;
+    margin-top: 1rem;
+}
+
+.manage-article .pagination input {
+    display: inline-block;
+    vertical-align: top;
+    padding: 0;
+    border: 0;
+    height: 2rem;
+    width: 3rem;
+    font-size: 1.1rem;
+    text-align: center;
+    background-color: transparent;
+    transition-duration: 0.5s;
+    transition-property: background-color;
+}
+
+.manage-article .pagination input:hover {
+    background-color: white;
+}
+
+.manage-article .pagination input:focus {
+    background-color: white;
+    border-bottom: 2px solid #009688;
+}
+
+.manage-article .pagination a {
+    cursor: pointer;
+    display: inline-block;
+    height: 2rem;
+    width: 2rem;
+    line-height: 2rem;
+    color: white;
+    background-color: #009688;
+    border-radius: 100%;
+    text-align: center;
+}
+
+.manage-article .pagination .prev {
+    float: left;
+}
+
+.manage-article .pagination .next {
+    float: right;
 }
