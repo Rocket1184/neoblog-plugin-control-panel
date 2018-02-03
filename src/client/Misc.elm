@@ -1,5 +1,6 @@
 module Misc exposing (..)
 
+import List
 import String
 import Html
 import Html.Events
@@ -13,10 +14,15 @@ import Json.Decode
     (,)
 
 
+{-| Html 'onkeydown' event
+-}
 onKeyDown : (Int -> msg) -> Html.Attribute msg
 onKeyDown tagger =
     Html.Events.on "keydown" (Json.Decode.map tagger Html.Events.keyCode)
 
+
+{-| Convert String to Int; If there are any errors, just return the default value
+-}
 toIntDefault : Int -> String -> Int
 toIntDefault default str =
     case String.toInt str of
@@ -25,3 +31,17 @@ toIntDefault default str =
 
         Err _ ->
             default
+
+
+{-| Build url with List of querystring parameters
+-}
+urlWithQuery : String -> List ( String, String ) -> String
+urlWithQuery url params =
+    String.join "?"
+        [ url
+        , String.join "&"
+            (List.map
+                (\( key, value ) -> key ++ "=" ++ value)
+                params
+            )
+        ]

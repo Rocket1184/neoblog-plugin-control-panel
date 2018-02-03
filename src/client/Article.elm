@@ -7,7 +7,7 @@ import Http
 import String
 import Json.Decode
 import List
-import Misc exposing ((=>), onKeyDown, toIntDefault)
+import Misc exposing ((=>), onKeyDown, toIntDefault, urlWithQuery)
 import Data
 import Request
 
@@ -215,12 +215,9 @@ requestArticles token page =
             10
 
         url =
-            String.join "?"
-                [ "api/articles"
-                , String.join "&"
-                    [ "offset=" ++ toString offset
-                    , "limit=" ++ toString limit
-                    ]
+            urlWithQuery "api/articles"
+                [ ( "offset", toString offset )
+                , ( "limit", toString limit )
                 ]
     in
         Request.get url token decodeArticles
