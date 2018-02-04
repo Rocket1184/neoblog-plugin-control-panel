@@ -38,6 +38,7 @@ type Msg
     | InputPageNumber String
     | GoToPage
     | FetchArticles
+    | NewClick
     | TitleClick Data.Article
     | PrevPage
     | NextPage
@@ -46,6 +47,7 @@ type Msg
 
 type ExternalMsg
     = NoOp
+    | NewArticle
     | EditArticle Data.Article
 
 
@@ -92,6 +94,11 @@ update session msg model =
             model
                 => (requestArticles session.token model.pageNumber)
                 => NoOp
+
+        NewClick ->
+            model
+                => Cmd.none
+                => NewArticle
 
         PrevPage ->
             let
@@ -183,7 +190,10 @@ viewPagination model =
 view : Model -> Html Msg
 view model =
     div [ class "manage-article" ]
-        [ div [ class "article-list" ] (List.map viewArticle model.articles)
+        [ div [ class "operation" ]
+            [ button [ onClick NewClick ] [ text "New Article" ]
+            ]
+        , div [ class "article-list" ] (List.map viewArticle model.articles)
         , viewPagination model
         ]
 
