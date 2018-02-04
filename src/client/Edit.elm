@@ -5,6 +5,7 @@ import List
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Html.Attributes.Extra exposing (boolProperty, innerHtml)
 import Json.Encode exposing (encode)
 import Task
 import Time
@@ -28,6 +29,8 @@ type alias Model =
     , url : String
     , meta : ArticleMeta
     , content : String
+    , preview : Bool
+    , html : String
     }
 
 
@@ -37,6 +40,8 @@ init mode url =
         mode
         url
         (ArticleMeta "" "" [])
+        ""
+        False
         ""
 
 
@@ -52,6 +57,8 @@ type Msg
     | SetDate String
     | SetTags String
     | SetContent String
+    | SetPreivew (Result Http.Error String)
+    | TogglePreview
     | Save
     | SaveResponse (Result Http.Error ErrorMsg)
     | Back
@@ -124,6 +131,40 @@ update session msg model =
                 => Cmd.none
                 => NoOp
 
+        SetPreivew response ->
+            case response of
+                Ok html ->
+                    { model | html = html }
+                        => Cmd.none
+                        => NoOp
+
+                Err (Http.BadStatus response) ->
+                    { model | html = "<pre>" ++ response.body ++ "</pre>" }
+                        => Cmd.none
+                        => NoOp
+
+                Err _ ->
+                    model
+                        => Cmd.none
+                        => NoOp
+
+        TogglePreview ->
+            let
+                preview =
+                    not model.preview
+
+                cmd =
+                    case preview of
+                        True ->
+                            requestPreview "md" model.content
+
+                        False ->
+                            Cmd.none
+            in
+                { model | preview = preview }
+                    => cmd
+                    => NoOp
+
         Back ->
             model
                 => Cmd.none
@@ -142,7 +183,14 @@ update session msg model =
 
 updateDateNow : Cmd Msg
 updateDateNow =
-    Task.perform (Date.fromTime >> toString >> SetDate) Time.now
+    Task.perform
+        (Date.fromTime
+            >> toString
+            >> String.dropLeft 1
+            >> String.dropRight 1
+            >> SetDate
+        )
+        Time.now
 
 
 
@@ -166,6 +214,21 @@ viewInput hint val toMsg bind =
         input (List.concat [ attr1, attr2 ]) []
 
 
+viewEditor : String -> Html Msg
+viewEditor src =
+    textarea
+        [ placeholder "Your Article Here :)"
+        , defaultValue src
+        , onInput SetContent
+        ]
+        []
+
+
+viewPreview : String -> Html Msg
+viewPreview html =
+    div [ class "preview", innerHtml html ] []
+
+
 view : Model -> Html Msg
 view model =
     let
@@ -176,14 +239,31 @@ view model =
 
                 Edit ->
                     viewInput "URL" model.url Ignore False
+
+        editorArea =
+            case model.preview of
+                True ->
+                    viewPreview model.html
+
+                False ->
+                    viewEditor model.content
+
+        active =
+            boolProperty "active"
     in
         div [ class "manage-edit" ]
-            [ div [ class "editor" ]
+            [ div [ class "wrapper" ]
                 [ viewInputURL
                 , viewInput "Title" model.meta.title SetTitle True
                 , viewInput "Date" model.meta.date SetDate True
                 , viewInput "Tags, separate by ',' ." (String.join "," model.meta.tags) SetTags True
-                , textarea [ placeholder "Your Article Here :)", onInput SetContent ] []
+                , div [ class "editor-area" ]
+                    [ div [ class "tab" ]
+                        [ span [ onClick TogglePreview, active <| not model.preview ] [ text "Editor" ]
+                        , span [ onClick TogglePreview, active model.preview ] [ text "Preview" ]
+                        ]
+                    , editorArea
+                    ]
                 , div [ class "operation" ]
                     [ button [ onClick Back ] [ text "Back" ]
                     , button [ onClick Save ] [ text "Save" ]
@@ -205,6 +285,20 @@ requestDetail token name =
     in
         Request.get url token deocdeArticleDetail
             |> Http.send LoadResponse
+
+
+requestPreview : String -> String -> Cmd Msg
+requestPreview ext src =
+    Http.request
+        { method = "POST"
+        , headers = []
+        , url = "/api/preview/" ++ ext
+        , body = Http.stringBody "text/plain" src
+        , expect = Http.expectString
+        , timeout = Nothing
+        , withCredentials = False
+        }
+        |> Http.send SetPreivew
 
 
 jsonBody : String -> ArticleMeta -> String -> Http.Body
