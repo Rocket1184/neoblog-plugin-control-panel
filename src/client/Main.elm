@@ -12,6 +12,7 @@ import Misc exposing ((=>))
 
 import Login
 import Article
+import Edit
 import NotFound
 
 
@@ -21,6 +22,7 @@ import NotFound
 type PageModel
     = Login Login.Model
     | Article Article.Model
+    | Edit Edit.Model
     | NotFound NotFound.Model
 
 
@@ -51,6 +53,9 @@ initPage location =
         Just "articles" ->
             Article Article.init
 
+        Just "new" ->
+            Edit (Edit.init Edit.New "")
+
         _ ->
             NotFound (NotFound.init location)
 
@@ -65,6 +70,9 @@ view model =
             Article pageModel ->
                 Html.map ArticleMsg (Article.view pageModel)
 
+            Edit pageModel ->
+                Html.map EditMsg (Edit.view pageModel)
+
             NotFound pageModel ->
                 Html.map NotFoundMsg (NotFound.view pageModel)
         ]
@@ -78,6 +86,7 @@ type Msg
     = UrlChange Location
     | LoginMsg Login.Msg
     | ArticleMsg Article.Msg
+    | EditMsg Edit.Msg
     | NotFoundMsg NotFound.Msg
 
 
@@ -121,6 +130,13 @@ update msg model =
                             in
                                 modelCmdMsg
 
+                        Edit pageModel ->
+                            let
+                                ( modelCmdMsg, msgFromPage ) =
+                                    complexSubUpdate Edit EditMsg (Edit.update session) Edit.Load pageModel
+                            in
+                                modelCmdMsg
+
                         _ ->
                             { model | page = page } => Cmd.none
 
@@ -145,10 +161,27 @@ update msg model =
 
             ( Article pageModel, ArticleMsg pageMsg ) ->
                 let
-                    ( modelCmdMsg, msgFromPage ) =
+                    ( ( newModel, newCmdMsg ), msgFromPage ) =
                         complexSubUpdate Article ArticleMsg (Article.update session) pageMsg pageModel
                 in
-                    modelCmdMsg
+                    case msgFromPage of
+                        Article.NewArticle ->
+                            ( newModel, Navigation.newUrl "#!/new" )
+
+                        _ ->
+                            ( newModel, newCmdMsg )
+
+            ( Edit pageModel, EditMsg pageMsg ) ->
+                let
+                    ( ( newModel, newCmdMsg ), msgFromPage ) =
+                        complexSubUpdate Edit EditMsg (Edit.update session) pageMsg pageModel
+                in
+                    case msgFromPage of
+                        Edit.BackToList ->
+                            ( newModel, Navigation.back 1 )
+
+                        _ ->
+                            ( newModel, newCmdMsg )
 
             ( NotFound pageModel, NotFoundMsg pageMsg ) ->
                 let
@@ -157,11 +190,7 @@ update msg model =
                 in
                     case msgFromPage of
                         NotFound.GoBack ->
-                            let
-                                locationCmd =
-                                    Navigation.back 1
-                            in
-                                ( model, locationCmd )
+                            ( model, Navigation.back 1 )
 
             _ ->
                 ( model, Cmd.none )
