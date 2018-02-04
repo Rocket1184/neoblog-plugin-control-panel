@@ -1,10 +1,23 @@
 module Data exposing (..)
 
-import Json.Decode exposing (..)
+import List
+import Json.Decode as D exposing (Decoder)
+import Json.Encode as E exposing (Value)
 
 
 type alias Session =
     { token : String }
+
+
+type alias ErrorMsg =
+    { message : String }
+
+
+decodeErrMsg : Decoder ErrorMsg
+decodeErrMsg =
+    D.map
+        ErrorMsg
+        (D.field "message" D.string)
 
 
 type alias FileMeta =
@@ -16,11 +29,11 @@ type alias FileMeta =
 
 decodeFileMeta : Decoder FileMeta
 decodeFileMeta =
-    map3
+    D.map3
         FileMeta
-        (field "path" string)
-        (field "base" string)
-        (field "ext" string)
+        (D.field "path" D.string)
+        (D.field "base" D.string)
+        (D.field "ext" D.string)
 
 
 type alias ArticleMeta =
@@ -32,11 +45,20 @@ type alias ArticleMeta =
 
 decodeArticleMeta : Decoder ArticleMeta
 decodeArticleMeta =
-    map3
+    D.map3
         ArticleMeta
-        (field "title" string)
-        (field "date" string)
-        (field "tags" (list string))
+        (D.field "title" D.string)
+        (D.field "date" D.string)
+        (D.field "tags" (D.list D.string))
+
+
+encodeArticleMeta : ArticleMeta -> E.Value
+encodeArticleMeta meta =
+    E.object
+        [ ( "title", E.string meta.title )
+        , ( "date", E.string meta.date )
+        , ( "tags", E.list <| List.map E.string meta.tags )
+        ]
 
 
 type alias Article =
@@ -47,10 +69,10 @@ type alias Article =
 
 decodeArticle : Decoder Article
 decodeArticle =
-    map2
+    D.map2
         Article
-        (field "file" decodeFileMeta)
-        (field "meta" decodeArticleMeta)
+        (D.field "file" decodeFileMeta)
+        (D.field "meta" decodeArticleMeta)
 
 
 type alias ArticleDetail =
@@ -64,10 +86,24 @@ type alias ArticleDetail =
 
 deocdeArticleDetail : Decoder ArticleDetail
 deocdeArticleDetail =
-    map5
+    D.map5
         ArticleDetail
-        (field "file" decodeFileMeta)
-        (field "meta" decodeArticleMeta)
-        (field "src" string)
-        (field "excerpt" string)
-        (field "more" bool)
+        (D.field "file" decodeFileMeta)
+        (D.field "meta" decodeArticleMeta)
+        (D.field "src" D.string)
+        (D.field "excerpt" D.string)
+        (D.field "more" D.bool)
+
+
+type alias ArticleForSend =
+    { ext : String
+    , src : String
+    }
+
+
+encodeArticleSend : ArticleForSend -> E.Value
+encodeArticleSend article =
+    E.object
+        [ ( "type", E.string article.ext )
+        , ( "src", E.string article.src )
+        ]
