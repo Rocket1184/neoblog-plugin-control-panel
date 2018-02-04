@@ -5,7 +5,7 @@ import List
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Html.Attributes.Extra exposing (boolProperty, innerHtml)
+import Html.Attributes.Extra exposing (innerHtml)
 import Json.Encode exposing (encode)
 import Task
 import Time
@@ -120,7 +120,7 @@ update session msg model =
                     model.meta
 
                 newMeta =
-                    { meta | tags = String.split "," tags }
+                    { meta | tags = String.split "," tags |> List.map String.trim }
             in
                 { model | meta = newMeta }
                     => Cmd.none
@@ -248,8 +248,13 @@ view model =
                 False ->
                     viewEditor model.content
 
-        active =
-            boolProperty "active"
+        activeClass active =
+            case active of
+                True ->
+                    class "active"
+
+                False ->
+                    class ""
     in
         div [ class "manage-edit" ]
             [ div [ class "wrapper" ]
@@ -259,8 +264,8 @@ view model =
                 , viewInput "Tags, separate by ',' ." (String.join "," model.meta.tags) SetTags True
                 , div [ class "editor-area" ]
                     [ div [ class "tab" ]
-                        [ span [ onClick TogglePreview, active <| not model.preview ] [ text "Editor" ]
-                        , span [ onClick TogglePreview, active model.preview ] [ text "Preview" ]
+                        [ span [ onClick TogglePreview, activeClass <| not model.preview ] [ text "Write" ]
+                        , span [ onClick TogglePreview, activeClass model.preview ] [ text "Preview" ]
                         ]
                     , editorArea
                     ]
