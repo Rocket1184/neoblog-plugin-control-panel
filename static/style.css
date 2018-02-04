@@ -123,11 +123,12 @@ body {
 }
 
 .manage-article .article .tags span {
-    font-size: 0.9em;
+    font-size: 0.8rem;
     background-color: #f0f0f0;
     border: 1px solid #b0b0b0;
     border-radius: 2px;
     padding: 0 0.25em;
+    margin-right: 0.3em;
 }
 
 .manage-article .article .date {
@@ -181,4 +182,62 @@ body {
 
 .manage-article .pagination .next {
     float: right;
+}
+
+.manage-edit {
+    height: 100%;
+    width: 100%;
+}
+
+.manage-edit .wrapper {
+    background-color: white;
+    padding: 1rem;
+    margin: 1rem;
+    border-radius: 2px;
+    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.15);
+}
+
+.manage-edit > .wrapper > input[type=text] {
+    display: block;
+    border: none;
+    border-bottom: 2px solid lightgrey;
+    background-color: transparent;
+    width: 100%;
+    line-height: 1.4rem;
+    margin: 0.5rem 0;
+    transition-property: border-color;
+    transition-duration: 0.4s;
+}
+
+.manage-edit > .wrapper > input[type=text]:focus {
+    border-color: #009688;
+}
+
+.manage-edit .tab {
+    width: 100%;
+    line-height: 2.5rem;
+}
+
+.manage-edit .tab span {
+    display: inline-block;
+    width: 50%;
+    text-align: center;
+}
+
+.manage-edit .tab span.active {
+    font-weight: bold;
+    color: #009688;
+    border-bottom: 2px solid #009688;
+}
+
+.manage-edit .editor-area textarea {
+    min-height: 30rem;
+    max-height: 50%;
+    min-width: 100%;
+    max-width: 100%;
+}
+
+.manage-edit .editor-area .preview {
+    height: 600px;
+    overflow: auto;
 }
