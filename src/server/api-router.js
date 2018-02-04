@@ -68,13 +68,10 @@ class ApiRouter {
         });
 
         this.router.use('/articles/:name', async (ctx, next) => {
-            ctx.state.article = ctx.app.server.state.articles.find(a => a.file.base === ctx.params.name);
-            if (!ctx.state.article) {
-                ctx.body = {
-                    message: `cannot find article named '${ctx.params.name}'.`
-                };
-                ctx.status = 404;
-                return;
+            const article = ctx.app.server.state.articles.find(a => a.file.base === ctx.params.name);
+            if (article) {
+                ctx.state.article = article;
+                ctx.state.fileName = `${article.file.base}.${article.file.ext}`
             }
             try {
                 await next();
@@ -97,16 +94,25 @@ class ApiRouter {
 
         // create new article
         this.router.post('/articles/:name', async ctx => {
-            const { article } = ctx.state;
+            const { article, fileName } = ctx.state;
             if (article) {
                 ctx.status = 409;
                 ctx.body = {
-                    message: `file named ${article.file.base}.${article.file.base} already exists.`
+                    message: `file named '${fileName}' already exists.`
+                };
+            } else if (ctx.get('content-type') !== 'application/json') {
+                ctx.status = 415;
+                ctx.body = {
+                    message: `please use 'Content-Type: application/json' and POST JSON string to me.`
                 };
             } else {
                 const { type, src } = ctx.request.body;
-                await writeFile(path.join(ctx.app.server.config.articleDir, `${ctx.params.name}.${type}`), src);
-                return ctx.status = 200;
+                const newName = `${ctx.params.name}.${type}`;
+                await writeFile(path.join(ctx.app.server.config.articleDir, newName), src);
+                ctx.status = 200;
+                ctx.body = {
+                    message: `file named '${newName}' has been created successfully.`
+                };
             }
         });
 
@@ -117,21 +123,35 @@ class ApiRouter {
                 await access(article.file.path, fs.constants.W_OK);
                 await unlink(article.file.path);
                 const { type, src } = ctx.request.body;
-                await writeFile(path.join(ctx.app.server.config.articleDir, `${ctx.params.name}.${type}`), src);
-                return ctx.status = 200;
+                const newName = `${ctx.params.name}.${type}`;
+                await writeFile(path.join(ctx.app.server.config.articleDir, newName), src);
+                ctx.status = 200;
+                ctx.body = {
+                    message: `file named '${newName}' has been updated successfully.`
+                };
             } else {
-                return ctx.status = 404;
+                ctx.status = 404;
+                ctx.body = {
+                    message: `could not modify inexistent file named '${ctx.params.name}'.`
+                };
             }
         });
 
         this.router.delete('/articles/:name', async ctx => {
-            const { article } = ctx.state;
+            const { article, fileName } = ctx.state;
             if (article) {
                 await access(article.file.path, fs.constants.W_OK);
                 await unlink(article.file.path);
-                return ctx.status = 200;
+                ctx.status = 200;
+                ctx.body = {
+                    message: `file named '${fileName}' has been deleted successfully..`
+                };
+            } else {
+                ctx.status = 404;
+                ctx.body = {
+                    message: `could not delete inexistent file named '${ctx.params.name}'.`
+                };
             }
-            ctx.status = 404;
         });
     }
 
