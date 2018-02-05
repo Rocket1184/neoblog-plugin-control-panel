@@ -10,11 +10,11 @@ import Html.Attributes.Extra exposing (innerHtml)
 import Json.Encode exposing (encode)
 import Task
 import Time
-import Date
+import Date exposing (Date)
 import Http
 import Data exposing (..)
 import Request
-import Misc exposing ((=>))
+import Misc exposing ((=>), dateString)
 
 
 -- Model
@@ -29,6 +29,7 @@ type alias Model =
     { mode : SaveMode
     , url : String
     , meta : ArticleMeta
+    , dateInput : String
     , content : String
     , preview : Bool
     , html : String
@@ -40,7 +41,8 @@ init mode url =
     Model
         mode
         url
-        (ArticleMeta "" "" [])
+        (ArticleMeta "" (Date.fromTime 0) [])
+        ""
         ""
         False
         ""
@@ -56,6 +58,7 @@ type Msg
     | SetURL String
     | SetTitle String
     | SetDate String
+    | DateBlur
     | SetTags String
     | SetContent String
     | SetPreivew (Result Http.Error String)
@@ -77,7 +80,7 @@ update session msg model =
         Load ->
             case model.mode of
                 New ->
-                    { model | meta = ArticleMeta "" "" [] }
+                    { model | meta = ArticleMeta "" (Date.fromTime 0) [] }
                         => updateDateNow
                         => NoOp
 
@@ -95,8 +98,11 @@ update session msg model =
 
                         content =
                             replace Regex.All regexp (\_ -> "") detail.src
+
+                        dateInput =
+                            dateString detail.meta.date
                     in
-                        { model | meta = detail.meta, content = content }
+                        { model | meta = detail.meta, dateInput = dateInput, content = content }
                             => Cmd.none
                             => NoOp
 
@@ -122,17 +128,46 @@ update session msg model =
                     => Cmd.none
                     => NoOp
 
-        SetDate now ->
+        SetDate str ->
             let
-                meta =
-                    model.meta
+                newModel =
+                    { model | dateInput = str }
 
                 newMeta =
-                    { meta | date = now }
+                    newModel.meta
             in
-                { model | meta = newMeta }
-                    => Cmd.none
-                    => NoOp
+                case Date.fromString str of
+                    Ok date ->
+                        { newModel | meta = { newMeta | date = date } }
+                            => Cmd.none
+                            => NoOp
+
+                    Err _ ->
+                        newModel
+                            => Cmd.none
+                            => NoOp
+
+        DateBlur ->
+            case Date.fromString model.dateInput of
+                Ok date ->
+                    let
+                        dateLength =
+                            String.length <| dateString model.meta.date
+
+                        newModel =
+                            if String.length model.dateInput < dateLength then
+                                { model | dateInput = dateString date }
+                            else
+                                model
+                    in
+                        newModel
+                            => Cmd.none
+                            => NoOp
+
+                Err _ ->
+                    { model | dateInput = dateString model.meta.date }
+                        => Cmd.none
+                        => NoOp
 
         SetTags tags ->
             let
@@ -201,13 +236,13 @@ update session msg model =
                 => NoOp
 
 
+{-| set model.meta.date as now
+-}
 updateDateNow : Cmd Msg
 updateDateNow =
     Task.perform
         (Date.fromTime
-            >> toString
-            >> String.dropLeft 1
-            >> String.dropRight 1
+            >> dateString
             >> SetDate
         )
         Time.now
@@ -229,7 +264,7 @@ viewInput hint val toMsg bind =
                     [ onInput toMsg ]
 
                 False ->
-                    [ readonly True ]
+                    [ disabled True ]
     in
         input (List.concat [ attr1, attr2 ]) []
 
@@ -252,13 +287,15 @@ viewPreview html =
 view : Model -> Html Msg
 view model =
     let
-        viewInputURL =
-            case model.mode of
-                New ->
-                    viewInput "URL" model.url SetURL True
-
-                Edit ->
-                    viewInput "URL" model.url Ignore False
+        dateInput =
+            input
+                [ type_ "text"
+                , placeholder "Date"
+                , onInput SetDate
+                , onBlur DateBlur
+                , value model.dateInput
+                ]
+                []
 
         editorArea =
             case model.preview of
@@ -278,9 +315,9 @@ view model =
     in
         div [ class "manage-edit" ]
             [ div [ class "wrapper" ]
-                [ viewInputURL
+                [ viewInput "URL" model.url SetURL (model.mode == New)
                 , viewInput "Title" model.meta.title SetTitle True
-                , viewInput "Date" model.meta.date SetDate True
+                , dateInput
                 , viewInput "Tags, separate by ',' ." (String.join "," model.meta.tags) SetTags True
                 , div [ class "editor-area" ]
                     [ div [ class "tab" ]
@@ -294,7 +331,6 @@ view model =
                     , button [ onClick Save ] [ text "Save" ]
                     ]
                 ]
-            , div [ class "preview" ] []
             ]
 
 
