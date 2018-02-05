@@ -2,6 +2,7 @@ module Misc exposing (..)
 
 import List
 import String
+import Date exposing (Date)
 import Html
 import Html.Events
 import Json.Decode
@@ -44,4 +45,39 @@ urlWithQuery url params =
                 (\( key, value ) -> key ++ "=" ++ value)
                 params
             )
+        ]
+
+
+{-| Convert Int to two digit String
+-}
+twoDigit : Int -> String
+twoDigit num =
+    let
+        str =
+            toString num
+
+        length =
+            String.length str
+    in
+        if length <= 1 then
+            String.padLeft 2 '0' str
+        else
+            String.right 2 str
+
+
+{-| Format date in "Thu Jan 01 1970 08:00:00"
+-}
+formatDate : Date -> String
+formatDate date =
+    String.join " "
+        [ toString <| Date.dayOfWeek date
+        , toString <| Date.month date
+        , twoDigit <| Date.day date
+        , toString <| Date.year date
+        , String.join
+            ":"
+            [ twoDigit <| Date.hour date
+            , twoDigit <| Date.minute date
+            , twoDigit <| Date.second date
+            ]
         ]
