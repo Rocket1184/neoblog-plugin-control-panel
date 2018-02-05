@@ -2,6 +2,7 @@ module Edit exposing (..)
 
 import String
 import List
+import Regex exposing (regex, replace)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
@@ -83,6 +84,25 @@ update session msg model =
                 Edit ->
                     model
                         => requestDetail session.token model.url
+                        => NoOp
+
+        LoadResponse response ->
+            case response of
+                Ok detail ->
+                    let
+                        regexp =
+                            regex "^```(meta)?\n[^`]+\n```\n"
+
+                        content =
+                            replace Regex.All regexp (\_ -> "") detail.src
+                    in
+                        { model | meta = detail.meta, content = content }
+                            => Cmd.none
+                            => NoOp
+
+                Err _ ->
+                    model
+                        => Cmd.none
                         => NoOp
 
         SetURL url ->
@@ -339,4 +359,5 @@ requestSave token model =
                     |> Http.send SaveResponse
 
             _ ->
-                Cmd.none
+                Request.put url token body decodeErrMsg
+                    |> Http.send SaveResponse
