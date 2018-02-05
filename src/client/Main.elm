@@ -3,8 +3,8 @@ module Main exposing (..)
 import Html exposing (Html, div)
 import Html.Attributes exposing (class)
 import Navigation exposing (Location)
-import UrlParser exposing (parseHash, s, (</>), string)
 import Data exposing (Session)
+import Route exposing (parseRoute)
 import Misc exposing ((=>))
 
 
@@ -43,18 +43,18 @@ init location =
 
 initPage : Location -> PageModel
 initPage location =
-    case parseHash (s "!" </> string) location of
-        Nothing ->
+    case parseRoute location of
+        Route.Login ->
             Login Login.init
 
-        Just "login" ->
-            Login Login.init
-
-        Just "articles" ->
+        Route.Articles ->
             Article Article.init
 
-        Just "new" ->
+        Route.New ->
             Edit (Edit.init Edit.New "")
+
+        Route.Edit name ->
+            Edit (Edit.init Edit.Edit name)
 
         _ ->
             NotFound (NotFound.init location)
@@ -167,6 +167,9 @@ update msg model =
                     case msgFromPage of
                         Article.NewArticle ->
                             ( newModel, Navigation.newUrl "#!/new" )
+
+                        Article.EditArticle article ->
+                            ( newModel, Navigation.newUrl <| "#!/edit/" ++ article.file.base )
 
                         _ ->
                             ( newModel, newCmdMsg )
