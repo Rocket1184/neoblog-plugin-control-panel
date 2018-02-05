@@ -81,3 +81,13 @@ formatDate date =
             , twoDigit <| Date.second date
             ]
         ]
+
+
+{-| Convert Date to String, without quotes.
+-}
+dateString : Date -> String
+dateString date =
+    date
+        |> toString
+        |> String.dropLeft 1
+        |> String.dropRight 1
