@@ -4,11 +4,10 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Http
-import String
 import Json.Decode
 import List
-import Misc exposing ((=>), onKeyDown, toIntDefault, urlWithQuery)
-import Data
+import Misc exposing ((=>), onKeyDown, toIntDefault, urlWithQuery, formatDate)
+import Data exposing (Session, Article, ArticleMeta, decodeArticle)
 import Request
 
 
@@ -16,7 +15,7 @@ import Request
 
 
 type alias Model =
-    { articles : List Data.Article
+    { articles : List Article
     , total : Int
     , pageNumber : Int
     , numberInput : String
@@ -39,7 +38,7 @@ type Msg
     | GoToPage
     | FetchArticles
     | NewClick
-    | TitleClick Data.Article
+    | TitleClick Article
     | PrevPage
     | NextPage
     | Ignore
@@ -48,10 +47,10 @@ type Msg
 type ExternalMsg
     = NoOp
     | NewArticle
-    | EditArticle Data.Article
+    | EditArticle Article
 
 
-update : Data.Session -> Msg -> Model -> ( ( Model, Cmd Msg ), ExternalMsg )
+update : Session -> Msg -> Model -> ( ( Model, Cmd Msg ), ExternalMsg )
 update session msg model =
     case msg of
         GotArticles (Ok result) ->
@@ -120,23 +119,22 @@ update session msg model =
                 => NoOp
 
 
-
 -- View
 
 
-viewArticleTags : Data.ArticleMeta -> Html Msg
+viewArticleTags : ArticleMeta -> Html Msg
 viewArticleTags meta =
     div [ class "tags" ]
         (List.map (\tag -> span [] [ text tag ]) meta.tags)
 
 
-viewArticle : Data.Article -> Html Msg
+viewArticle : Article -> Html Msg
 viewArticle article =
     div [ class "article" ]
         [ a [ class "title", onClick (TitleClick article) ]
             [ text article.meta.title ]
         , viewArticleTags article.meta
-        , span [ class "date" ] [ text article.meta.date ]
+        , span [ class "date" ] [ text <| formatDate article.meta.date ]
         ]
 
 
@@ -204,7 +202,7 @@ view model =
 
 type alias ArticlesResponse =
     { total : Int
-    , articles : List Data.Article
+    , articles : List Article
     }
 
 
@@ -212,7 +210,7 @@ decodeArticles : Json.Decode.Decoder ArticlesResponse
 decodeArticles =
     Json.Decode.map2 ArticlesResponse
         (Json.Decode.field "total" Json.Decode.int)
-        (Json.Decode.field "aritcles" (Json.Decode.list Data.decodeArticle))
+        (Json.Decode.field "aritcles" (Json.Decode.list decodeArticle))
 
 
 requestArticles : String -> Int -> Cmd Msg
