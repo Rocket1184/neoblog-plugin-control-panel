@@ -1,7 +1,9 @@
 module Data exposing (..)
 
 import List
+import Date exposing (Date)
 import Json.Decode as D exposing (Decoder)
+import Json.Decode.Extra as DE
 import Json.Encode as E exposing (Value)
 
 
@@ -38,7 +40,7 @@ decodeFileMeta =
 
 type alias ArticleMeta =
     { title : String
-    , date : String
+    , date : Date
     , tags : List String
     }
 
@@ -48,7 +50,7 @@ decodeArticleMeta =
     D.map3
         ArticleMeta
         (D.field "title" D.string)
-        (D.field "date" D.string)
+        (D.field "date" DE.date)
         (D.field "tags" (D.list D.string))
 
 
@@ -56,7 +58,7 @@ encodeArticleMeta : ArticleMeta -> E.Value
 encodeArticleMeta meta =
     E.object
         [ ( "title", E.string meta.title )
-        , ( "date", E.string meta.date )
+        , ( "date", E.string <| toString meta.date )
         , ( "tags", E.list <| List.map E.string meta.tags )
         ]
 
