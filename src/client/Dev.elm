@@ -6,22 +6,11 @@ import Navigation
 import Main
 
 
-{-| Attach stylesheet to Dev html
--}
-stylesheet : Html msg
-stylesheet =
-    node "link"
-        [ rel "stylesheet"
-        , href "./style.css"
-        ]
-        []
-
-
 view : Main.Model -> Html Main.Msg
 view model =
     div []
-        [ Main.view model
-        , stylesheet
+        [ node "link" [ rel "stylesheet", href "./style.css" ] []
+        , Main.view model
         ]
 
 
