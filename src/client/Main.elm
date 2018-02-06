@@ -37,7 +37,7 @@ init location =
     ( { session = Session ""
       , page = initPage location
       }
-    , Cmd.none
+    , Navigation.newUrl "#!/login"
     )
 
 
@@ -58,6 +58,10 @@ initPage location =
 
         _ ->
             NotFound (NotFound.init location)
+
+
+
+-- View
 
 
 view : Model -> Html Msg
