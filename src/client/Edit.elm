@@ -102,7 +102,11 @@ update session msg model =
                         dateInput =
                             dateString detail.meta.date
                     in
-                        { model | meta = detail.meta, dateInput = dateInput, content = content }
+                        { model
+                            | meta = detail.meta
+                            , dateInput = dateInput
+                            , content = content
+                        }
                             => Cmd.none
                             => NoOp
 
@@ -148,34 +152,21 @@ update session msg model =
                             => NoOp
 
         DateBlur ->
-            case Date.fromString model.dateInput of
-                Ok date ->
-                    let
-                        dateLength =
-                            String.length <| dateString model.meta.date
-
-                        newModel =
-                            if String.length model.dateInput < dateLength then
-                                { model | dateInput = dateString date }
-                            else
-                                model
-                    in
-                        newModel
-                            => Cmd.none
-                            => NoOp
-
-                Err _ ->
-                    { model | dateInput = dateString model.meta.date }
-                        => Cmd.none
-                        => NoOp
+            { model | dateInput = dateString model.meta.date }
+                => Cmd.none
+                => NoOp
 
         SetTags tags ->
             let
+                newTags =
+                    String.split "," tags
+                        |> List.map String.trim
+
                 meta =
                     model.meta
 
                 newMeta =
-                    { meta | tags = String.split "," tags |> List.map String.trim }
+                    { meta | tags = newTags }
             in
                 { model | meta = newMeta }
                     => Cmd.none
@@ -240,12 +231,7 @@ update session msg model =
 -}
 updateDateNow : Cmd Msg
 updateDateNow =
-    Task.perform
-        (Date.fromTime
-            >> dateString
-            >> SetDate
-        )
-        Time.now
+    Task.perform (Date.fromTime >> dateString >> SetDate) Time.now
 
 
 
@@ -256,7 +242,7 @@ viewInput : String -> String -> (String -> msg) -> Bool -> Html msg
 viewInput hint val toMsg bind =
     let
         attr1 =
-            [ defaultValue val, type_ "text", placeholder hint ]
+            [ value val, type_ "text", placeholder hint ]
 
         attr2 =
             case bind of
@@ -269,11 +255,23 @@ viewInput hint val toMsg bind =
         input (List.concat [ attr1, attr2 ]) []
 
 
+viewInputDate : String -> Html Msg
+viewInputDate val =
+    input
+        [ type_ "text"
+        , placeholder "Date"
+        , onInput SetDate
+        , onBlur DateBlur
+        , value val
+        ]
+        []
+
+
 viewEditor : String -> Html Msg
 viewEditor src =
     textarea
         [ placeholder "Your Article Here :)"
-        , defaultValue src
+        , value src
         , onInput SetContent
         ]
         []
@@ -287,16 +285,6 @@ viewPreview html =
 view : Model -> Html Msg
 view model =
     let
-        dateInput =
-            input
-                [ type_ "text"
-                , placeholder "Date"
-                , onInput SetDate
-                , onBlur DateBlur
-                , value model.dateInput
-                ]
-                []
-
         editorArea =
             case model.preview of
                 True ->
@@ -317,11 +305,11 @@ view model =
             [ div [ class "wrapper" ]
                 [ viewInput "URL" model.url SetURL (model.mode == New)
                 , viewInput "Title" model.meta.title SetTitle True
-                , dateInput
+                , viewInputDate model.dateInput
                 , viewInput "Tags, separate by ',' ." (String.join "," model.meta.tags) SetTags True
                 , div [ class "editor-area" ]
                     [ div [ class "tab" ]
-                        [ span [ onClick TogglePreview, activeClass <| not model.preview ] [ text "Write" ]
+                        [ span [ onClick TogglePreview, activeClass <| not model.preview ] [ text "Compose" ]
                         , span [ onClick TogglePreview, activeClass model.preview ] [ text "Preview" ]
                         ]
                     , editorArea
@@ -362,8 +350,10 @@ requestPreview ext src =
         |> Http.send SetPreivew
 
 
-jsonBody : String -> ArticleMeta -> String -> Http.Body
-jsonBody ext meta content =
+{-| encode ArticleMeta and content String into POST/PUT body
+-}
+buildBody : String -> ArticleMeta -> String -> Http.Body
+buildBody ext meta content =
     let
         src =
             String.join "\n"
@@ -380,6 +370,8 @@ jsonBody ext meta content =
             |> Http.jsonBody
 
 
+{-| request create or update article following current SaveMode
+-}
 requestSave : String -> Model -> Cmd Msg
 requestSave token model =
     let
@@ -387,13 +379,13 @@ requestSave token model =
             "api/articles/" ++ model.url
 
         body =
-            jsonBody "md" model.meta model.content
+            buildBody "md" model.meta model.content
     in
         case model.mode of
             New ->
                 Request.post url token body decodeErrMsg
                     |> Http.send SaveResponse
 
-            _ ->
+            Edit ->
                 Request.put url token body decodeErrMsg
                     |> Http.send SaveResponse
