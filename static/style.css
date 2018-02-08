@@ -141,18 +141,24 @@ body {
     margin-top: 1rem;
 }
 
-.manage-article .pagination input {
+.manage-article .pagination .number {
     display: inline-block;
-    vertical-align: top;
-    padding: 0;
-    border: 0;
     height: 2rem;
-    width: 3rem;
     font-size: 1.1rem;
     text-align: center;
+}
+
+.manage-article .pagination input {
+    width: 3rem;
+    padding: 0;
+    border: 0;
     background-color: transparent;
     transition-duration: 0.5s;
     transition-property: background-color;
+}
+
+.manage-article .pagination .max {
+    width: 3rem;
 }
 
 .manage-article .pagination input:hover {
@@ -174,6 +180,7 @@ body {
     background-color: #009688;
     border-radius: 100%;
     text-align: center;
+    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.15);
 }
 
 .manage-article .pagination .prev {
@@ -244,5 +251,5 @@ body {
 
 .manage-edit .editor-area .preview * {
     max-width: 100%;
-    white-space:  pre-wrap;
+    white-space: pre-wrap;
 }
