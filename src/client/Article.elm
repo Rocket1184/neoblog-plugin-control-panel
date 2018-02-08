@@ -1,12 +1,14 @@
 module Article exposing (..)
 
+import String exposing (toInt)
+import List
+import Result exposing (withDefault)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Http
 import Json.Decode
-import List
-import Misc exposing ((=>), onKeyDown, toIntDefault, urlWithQuery, formatDate)
+import Misc exposing ((=>), onKeyDown, urlWithQuery, formatDate)
 import Data exposing (Session, Article, ArticleMeta, decodeArticle)
 import Request
 
@@ -16,7 +18,7 @@ import Request
 
 type alias Model =
     { articles : List Article
-    , total : Int
+    , maxPage : Int
     , pageNumber : Int
     , numberInput : String
     }
@@ -56,7 +58,7 @@ update session msg model =
         GotArticles (Ok result) ->
             { model
                 | articles = result.articles
-                , total = result.total
+                , maxPage = ceiling ((toFloat result.total) / 10)
             }
                 => Cmd.none
                 => NoOp
@@ -81,13 +83,24 @@ update session msg model =
 
         GoToPage ->
             let
+                inputPage =
+                    withDefault model.pageNumber <| toInt model.numberInput
+
                 newPage =
-                    toIntDefault model.pageNumber model.numberInput
+                    if inputPage >= model.maxPage then
+                        model.maxPage
+                    else if inputPage <= 0 then
+                        1
+                    else
+                        inputPage
 
                 newMsg =
                     SetPageNumber newPage
+
+                newModel =
+                    { model | numberInput = "" }
             in
-                update session newMsg model
+                update session newMsg newModel
 
         FetchArticles ->
             model
@@ -117,6 +130,7 @@ update session msg model =
             model
                 => Cmd.none
                 => NoOp
+
 
 
 -- View
@@ -154,7 +168,7 @@ viewPagination model =
                     |> List.singleton
 
         next =
-            if model.pageNumber * 10 >= model.total then
+            if model.pageNumber >= model.maxPage then
                 []
             else
                 a
@@ -166,10 +180,11 @@ viewPagination model =
                     |> List.singleton
 
         number =
-            input
+            [ input
                 [ class "number"
-                , placeholder (toString model.pageNumber)
                 , type_ "number"
+                , placeholder (toString model.pageNumber)
+                , value model.numberInput
                 , onInput InputPageNumber
                 , onKeyDown
                     (\code ->
@@ -180,7 +195,11 @@ viewPagination model =
                     )
                 ]
                 []
-                |> List.singleton
+            , span [ class "number" ] [ text "/" ]
+            , span [ class "number max" ]
+                [ text <| toString model.maxPage
+                ]
+            ]
     in
         div [ class "pagination" ] (List.concat [ prev, number, next ])
 
