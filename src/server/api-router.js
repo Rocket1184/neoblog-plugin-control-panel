@@ -11,6 +11,7 @@ const Jwt = require('jsonwebtoken');
 const Router = require('koa-router');
 
 const access = util.promisify(fs.access);
+const rename = util.promisify(fs.rename);
 const unlink = util.promisify(fs.unlink);
 const writeFile = util.promisify(fs.writeFile);
 
@@ -51,6 +52,11 @@ class ApiRouter {
 
         this.router.get('/profile', ctx => {
             ctx.body = ctx.state.user;
+        });
+
+        // get article source types which parser can understand
+        this.router.get('/parser-types', async ctx => {
+            ctx.body = ctx.app.server.parser.eventNames();
         });
 
         this.router.get('/articles', ctx => {
@@ -144,12 +150,65 @@ class ApiRouter {
                 await unlink(article.file.path);
                 ctx.status = 200;
                 ctx.body = {
-                    message: `file named '${fileName}' has been deleted successfully..`
+                    message: `file named '${fileName}' has been deleted successfully.`
                 };
             } else {
                 ctx.status = 404;
                 ctx.body = {
                     message: `could not delete inexistent file named '${ctx.params.name}'.`
+                };
+            }
+        });
+
+        // Apply partial modifications to article file. Currently only 'rename'.
+        this.router.patch('/articles/:name', async ctx => {
+            const { article, fileName } = ctx.state;
+            if (ctx.get('content-type') !== 'application/json') {
+                ctx.status = 415;
+                ctx.body = {
+                    message: `please use 'Content-Type: application/json' and PATCH JSON string to me.`
+                };
+            } else if (article) {
+                await access(article.file.path, fs.constants.W_OK);
+                const { type, payload } = ctx.request.body;
+                switch (type) {
+                    // eslint-disable-next-line no-case-declarations
+                    case 'rename':
+                        if (typeof payload !== 'string') {
+                            ctx.status = 400;
+                            ctx.body = {
+                                message: `'payload' of 'rename' must be string.`
+                            };
+                            return;
+                        } else if (payload === "") {
+                            ctx.status = 400;
+                            ctx.body = {
+                                message: `'payload' of 'rename' cannot be empty.`
+                            };
+                            return;
+                        } else {
+                            const newPath = path.format({
+                                dir: path.dirname(article.file.path),
+                                base: `${payload}.${article.file.ext}`
+                            });
+                            await rename(article.file.path, newPath);
+                        }
+                        break;
+                    default:
+                        ctx.status = 400;
+                        ctx.body = {
+                            message: `unknown action type '${type}'.`
+                        };
+                        return;
+                }
+                ctx.status = 200;
+                ctx.body = {
+                    message: `file named '${fileName}' has been updated successfully..`
+                };
+            } else {
+                ctx.status = 404;
+                ctx.body = {
+                    message: `could not rename inexistent file named '${ctx.params.name}'.`
                 };
             }
         });
