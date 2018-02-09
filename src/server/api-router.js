@@ -82,12 +82,17 @@ class ApiRouter {
             try {
                 await next();
             } catch (err) {
-                if (err.code === 'ENOENT') {
+                if (err.status && err.message) {
+                    // is thrown by `ctx.throw`
+                    ctx.status = err.status;
+                    ctx.body = { message: err.message };
+                    return;
+                } else if (err.code === 'ENOENT') {
                     return ctx.status = 404;
                 } else if (err.code === 'EACCES') {
                     return ctx.status = 403;
                 }
-                ctx.body = err.stack;
+                ctx.body = { message: err.stack };
                 ctx.status = 500;
             }
         });
@@ -102,23 +107,14 @@ class ApiRouter {
         this.router.post('/articles/:name', async ctx => {
             const { article, fileName } = ctx.state;
             if (article) {
-                ctx.status = 409;
-                ctx.body = {
-                    message: `file named '${fileName}' already exists.`
-                };
+                ctx.throw(409, `file named '${fileName}' already exists.`);
             } else if (ctx.get('content-type') !== 'application/json') {
-                ctx.status = 415;
-                ctx.body = {
-                    message: `please use 'Content-Type: application/json' and POST JSON string to me.`
-                };
+                ctx.throw(415, `please use 'Content-Type: application/json' and POST JSON string to me.`);
             } else {
                 const { type, src } = ctx.request.body;
                 const newName = `${ctx.params.name}.${type}`;
                 await writeFile(path.join(ctx.app.server.config.articleDir, newName), src);
-                ctx.status = 200;
-                ctx.body = {
-                    message: `file named '${newName}' has been created successfully.`
-                };
+                ctx.body = { message: `file named '${newName}' has been created successfully.` };
             }
         });
 
@@ -131,15 +127,9 @@ class ApiRouter {
                 const { type, src } = ctx.request.body;
                 const newName = `${ctx.params.name}.${type}`;
                 await writeFile(path.join(ctx.app.server.config.articleDir, newName), src);
-                ctx.status = 200;
-                ctx.body = {
-                    message: `file named '${newName}' has been updated successfully.`
-                };
+                ctx.body = { message: `file named '${newName}' has been updated successfully.` };
             } else {
-                ctx.status = 404;
-                ctx.body = {
-                    message: `could not modify inexistent file named '${ctx.params.name}'.`
-                };
+                ctx.throw(404, `could not modify inexistent file named '${ctx.params.name}'.`);
             }
         });
 
@@ -148,15 +138,9 @@ class ApiRouter {
             if (article) {
                 await access(article.file.path, fs.constants.W_OK);
                 await unlink(article.file.path);
-                ctx.status = 200;
-                ctx.body = {
-                    message: `file named '${fileName}' has been deleted successfully.`
-                };
+                ctx.body = { message: `file named '${fileName}' has been deleted successfully.` };
             } else {
-                ctx.status = 404;
-                ctx.body = {
-                    message: `could not delete inexistent file named '${ctx.params.name}'.`
-                };
+                ctx.throw(404, `could not delete inexistent file named '${ctx.params.name}'.`);
             }
         });
 
@@ -164,10 +148,7 @@ class ApiRouter {
         this.router.patch('/articles/:name', async ctx => {
             const { article, fileName } = ctx.state;
             if (ctx.get('content-type') !== 'application/json') {
-                ctx.status = 415;
-                ctx.body = {
-                    message: `please use 'Content-Type: application/json' and PATCH JSON string to me.`
-                };
+                ctx.throw(415, `please use 'Content-Type: application/json' and PATCH JSON string to me.`);
             } else if (article) {
                 await access(article.file.path, fs.constants.W_OK);
                 const { type, payload } = ctx.request.body;
@@ -175,17 +156,9 @@ class ApiRouter {
                     // eslint-disable-next-line no-case-declarations
                     case 'rename':
                         if (typeof payload !== 'string') {
-                            ctx.status = 400;
-                            ctx.body = {
-                                message: `'payload' of 'rename' must be string.`
-                            };
-                            return;
+                            ctx.throw(400, `'payload' of 'rename' must be string.`);
                         } else if (payload === "") {
-                            ctx.status = 400;
-                            ctx.body = {
-                                message: `'payload' of 'rename' cannot be empty.`
-                            };
-                            return;
+                            ctx.throw(400, `'payload' of 'rename' cannot be empty.`);
                         } else {
                             const newPath = path.format({
                                 dir: path.dirname(article.file.path),
@@ -195,21 +168,11 @@ class ApiRouter {
                         }
                         break;
                     default:
-                        ctx.status = 400;
-                        ctx.body = {
-                            message: `unknown action type '${type}'.`
-                        };
-                        return;
+                        ctx.throw(400, `unknown action type '${type}'.`);
                 }
-                ctx.status = 200;
-                ctx.body = {
-                    message: `file named '${fileName}' has been updated successfully..`
-                };
+                ctx.body = { message: `file named '${fileName}' has been updated successfully.` };
             } else {
-                ctx.status = 404;
-                ctx.body = {
-                    message: `could not rename inexistent file named '${ctx.params.name}'.`
-                };
+                ctx.throw(404, `could not rename inexistent file named '${ctx.params.name}'.`);
             }
         });
     }
