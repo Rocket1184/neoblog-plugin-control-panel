@@ -1,6 +1,6 @@
 {
     "name": "@neoblog/plugin-control-panel",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "article/config management panel for neoblog",
     "scripts": {
         "start": "neoblog",
