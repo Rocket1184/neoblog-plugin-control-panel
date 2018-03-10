@@ -2,7 +2,7 @@ const PluginControlPanel = require('.');
 
 module.exports = {
     title: 'Plugin Control Panel',
-    articleDir: './node_modules/neoblog/example/article',
+    articleDir: './node_modules/@neoblog/neoblog',
     plugins: [
         new PluginControlPanel({ usr: 'root', pwd: 'root' })
     ],

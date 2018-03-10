@@ -1,5 +1,5 @@
 {
-    "name": "neoblog-plugin-control-panel",
+    "name": "@neoblog/plugin-control-panel",
     "version": "0.1.0",
     "description": "article/config management panel for neoblog",
     "scripts": {
@@ -13,18 +13,24 @@
     ],
     "author": "rocka <i@rocka.me>",
     "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/rocket1184/neoblog-plugin-control-panel"
+    },
     "dependencies": {
-        "jsonwebtoken": "^8.1.1",
+        "jsonwebtoken": "^8.2.0",
         "koa-body": "^2.5.0",
         "koa-jwt": "^3.3.0",
         "koa-mount": "^3.0.0",
         "koa-router": "^7.4.0",
-        "koa-send": "^4.1.2",
-        "koa-static-cache": "^5.1.1"
+        "koa-send": "^4.1.3",
+        "koa-static-cache": "^5.1.2"
+    },
+    "peerDependencies": {
+        "@neoblog/neoblog": "^0.1.0"
     },
     "devDependencies": {
         "elm": "^0.18.0",
-        "google-closure-compiler-js": "^20180101.0.0",
-        "neoblog": "git+https://github.com/rocket1184/neoblog.git"
+        "google-closure-compiler-js": "^20180204.0.0"
     }
 }
