@@ -86,8 +86,8 @@ type alias ArticleDetail =
     }
 
 
-deocdeArticleDetail : Decoder ArticleDetail
-deocdeArticleDetail =
+decodeArticleDetail : Decoder ArticleDetail
+decodeArticleDetail =
     D.map5
         ArticleDetail
         (D.field "file" decodeFileMeta)

@@ -332,7 +332,7 @@ requestDetail token name =
         url =
             "api/articles/" ++ name
     in
-        Request.get url token deocdeArticleDetail
+        Request.get url token decodeArticleDetail
             |> Http.send LoadResponse
 
 

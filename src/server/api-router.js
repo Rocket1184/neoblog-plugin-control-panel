@@ -17,11 +17,11 @@ const writeFile = util.promisify(fs.writeFile);
 
 class ApiRouter {
     constructor(secret, jwtOptions, usr, pwd, profile = {}) {
-        if (!secret) throw new Error('[ApiRoutes] `secret` must be specificed.');
+        if (!secret) throw new Error('[ApiRoutes] `secret` must be specified.');
         this.secret = secret;
-        if (!usr) throw new Error('[ApiRoutes] `usr` must be specificed.');
+        if (!usr) throw new Error('[ApiRoutes] `usr` must be specified.');
         this.usr = usr;
-        if (!pwd) throw new Error('[ApiRoutes] `pwd` must be specificed.');
+        if (!pwd) throw new Error('[ApiRoutes] `pwd` must be specified.');
         this.pwd = crypto.createHash('sha384').update(pwd).digest('hex');
         this.profile = Object.assign(profile, { usr: this.usr });
         if (!jwtOptions) this.jwtOptions = { expiresIn: '2d' };
@@ -66,7 +66,7 @@ class ApiRouter {
             limit = limit || 10;
             const body = {
                 total: articles.length,
-                aritcles: articles
+                articles: articles
                     .slice(offset, offset + limit)
                     .map(a => ({ meta: a.meta, file: a.file }))
             };

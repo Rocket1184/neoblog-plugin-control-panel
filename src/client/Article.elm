@@ -229,7 +229,7 @@ decodeArticles : Json.Decode.Decoder ArticlesResponse
 decodeArticles =
     Json.Decode.map2 ArticlesResponse
         (Json.Decode.field "total" Json.Decode.int)
-        (Json.Decode.field "aritcles" (Json.Decode.list decodeArticle))
+        (Json.Decode.field "articles" (Json.Decode.list decodeArticle))
 
 
 requestArticles : String -> Int -> Cmd Msg
