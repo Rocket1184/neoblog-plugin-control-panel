@@ -39,6 +39,7 @@ body {
 /* Login */
 
 .manage-login {
+    box-sizing: content-box;
     width: 300px;
     height: 260px;
     margin: auto;
@@ -64,6 +65,7 @@ body {
 }
 
 .manage-login input {
+    box-sizing: border-box;
     width: calc(300px - 7rem);
     padding: 0.25rem 0.5rem;
     border: 1px solid #ddd;
@@ -81,6 +83,7 @@ body {
 .manage-login button {
     cursor: pointer;
     float: right;
+    box-sizing: border-box;
     width: 4rem;
     height: 2rem;
     border: 1px solid #009688;
@@ -149,6 +152,7 @@ body {
 }
 
 .manage-article .pagination input {
+    box-sizing: border-box;
     width: 3rem;
     padding: 0;
     border: 0;
