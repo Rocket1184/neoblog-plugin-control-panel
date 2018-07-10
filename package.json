@@ -18,19 +18,19 @@
         "url": "https://github.com/rocket1184/neoblog-plugin-control-panel"
     },
     "dependencies": {
-        "jsonwebtoken": "^8.2.0",
-        "koa-body": "^2.5.0",
-        "koa-jwt": "^3.3.0",
+        "jsonwebtoken": "^8.3.0",
+        "koa-body": "^4.0.4",
+        "koa-jwt": "^3.3.2",
         "koa-mount": "^3.0.0",
         "koa-router": "^7.4.0",
-        "koa-send": "^4.1.3",
+        "koa-send": "^5.0.0",
         "koa-static-cache": "^5.1.2"
     },
     "peerDependencies": {
-        "@neoblog/neoblog": "^0.1.0"
+        "@neoblog/neoblog": "^0.1.0 || ^0.2.0"
     },
     "devDependencies": {
-        "elm": "^0.18.0",
-        "google-closure-compiler-js": "^20180204.0.0"
+        "elm": "^0.18.0-exp5",
+        "google-closure-compiler-js": "^20180610.0.0"
     }
 }
